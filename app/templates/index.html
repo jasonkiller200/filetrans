@@ -42,9 +42,10 @@
             <div class="card-body">
                 <form action="{{ url_for('web.upload_file_web') }}" method="post" enctype="multipart/form-data">
                     <div class="input-group">
-                        <input type="file" class="form-control" name="file" id="fileInput">
+                        <input type="file" class="form-control" name="files" id="fileInput" multiple>
                         <button type="submit" class="btn btn-primary">上傳</button>
                     </div>
+                    <small class="form-text text-muted mt-2">您可以按住 Ctrl (Windows/Linux) 或 Command (macOS) 鍵來選取多個檔案。</small>
                 </form>
             </div>
         </div>
