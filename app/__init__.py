@@ -7,7 +7,7 @@ def create_app():
 
     # --- Configuration ---
     app.config['SECRET_KEY'] = 'a_random_secret_key_that_should_be_changed' # Will be set by run.py or config
-    API_KEY_SECRET = 'YOUR_SECURE_API_KEY_HERE' # Will be set by run.py or config
+    API_KEY_SECRET = 'wurkfkvkwodkjrtijsheplkgjehrb1216' # Will be set by run.py or config
     MPS_DESTINATION_FOLDER = r'P:/F004/MPS維護' # Will be set by run.py or config
 
     # Determine base directory dynamically for relative paths

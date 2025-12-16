@@ -16,24 +16,35 @@ def index():
 
 @web_bp.route('/upload', methods=['POST'])
 def upload_file_web():
-    """Handles file uploads from the web UI to the 'uploads' folder."""
+    """Handles multiple file uploads from the web UI to the 'uploads' folder."""
     web_file_service = current_app.config['WEB_FILE_SERVICE']
-    if 'file' not in request.files:
-        flash('No file part in the request.', 'warning')
+    
+    if 'files' not in request.files:
+        flash('請求中沒有檔案部分。', 'warning')
         return redirect(url_for('web.index'))
 
-    file = request.files['file']
+    files = request.files.getlist('files')
 
-    if file.filename == '':
-        flash('No file selected.', 'warning')
+    if not files or all(f.filename == '' for f in files):
+        flash('沒有選擇任何檔案。', 'warning')
         return redirect(url_for('web.index'))
 
-    if file:
-        try:
-            saved_file_info = web_file_service.save_file(file)
-            flash(f"檔案 '{saved_file_info.original_name}' (大小: {saved_file_info.formatted_size}) 上傳成功!", 'success')
-        except Exception as e:
-            flash(f"An error occurred while uploading: {e}", 'danger')
+    successful_uploads = 0
+    failed_uploads = 0
+    
+    for file in files:
+        if file and file.filename != '':
+            try:
+                web_file_service.save_file(file)
+                successful_uploads += 1
+            except Exception as e:
+                flash(f"上傳檔案 '{file.filename}' 時發生錯誤: {e}", 'danger')
+                failed_uploads += 1
+
+    if successful_uploads > 0:
+        flash(f"成功上傳 {successful_uploads} 個檔案。", 'success')
+    if failed_uploads > 0:
+        flash(f"有 {failed_uploads} 個檔案上傳失敗。", 'danger')
     
     return redirect(url_for('web.index'))
 
