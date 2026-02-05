@@ -1,12 +1,14 @@
 import os
 import math
+from datetime import datetime, timezone, timedelta
 
 class FileInfo:
     """Represents information about a single file."""
-    def __init__(self, original_name: str, stored_name: str, path: str):
+    def __init__(self, original_name: str, stored_name: str, path: str, has_password: bool = False):
         self.original_name = original_name
         self.stored_name = stored_name
         self.path = path
+        self.has_password = has_password
         try:
             self.size_in_bytes = os.path.getsize(path)
         except FileNotFoundError:
@@ -27,6 +29,18 @@ class FileInfo:
         p = math.pow(1024, i)
         s = round(self.size_in_bytes / p, 2)
         return f"{s} {size_name[i]}"
+
+    @property
+    def upload_time(self) -> str:
+        """Returns the file modification time in Taiwan timezone (UTC+8)."""
+        try:
+            mtime = os.path.getmtime(self.path)
+            # Taiwan is UTC+8
+            tw_tz = timezone(timedelta(hours=8))
+            dt = datetime.fromtimestamp(mtime, tz=tw_tz)
+            return dt.strftime('%Y-%m-%d %H:%M:%S')
+        except (FileNotFoundError, OSError):
+            return "Unknown"
 
     def __repr__(self):
         return f"<FileInfo(original_name='{self.original_name}', size='{self.formatted_size}')>"
