@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint, render_template, request, send_from_directory, redirect, url_for, flash, current_app
+from flask import Blueprint, render_template, request, send_from_directory, redirect, url_for, flash, current_app, session
 
 web_bp = Blueprint('web', __name__)
 
@@ -7,15 +7,18 @@ web_bp = Blueprint('web', __name__)
 def index():
     """Renders the main page with files from the 'uploads' folder."""
     web_file_service = current_app.config['WEB_FILE_SERVICE']
+    marquee_service = current_app.config['MARQUEE_SERVICE']
+    
     sort_by = request.args.get('sort', 'name')
     order = request.args.get('order', 'asc')
     
     try:
         all_files = web_file_service.get_all_files(sort_by=sort_by, order=order)
-        return render_template('index.html', files=all_files, current_sort=sort_by, current_order=order)
+        marquee_text = marquee_service.get_marquee()
+        return render_template('index.html', files=all_files, current_sort=sort_by, current_order=order, marquee_text=marquee_text)
     except Exception as e:
         flash(f"Error loading file list: {e}", "danger")
-        return render_template('index.html', files=[])
+        return render_template('index.html', files=[], marquee_text="System Error")
 
 @web_bp.route('/upload', methods=['POST'])
 def upload_file_web():
@@ -129,5 +132,46 @@ def delete_file_route(stored_name):
 def check_lock(stored_name):
     """API to check if file is locked (for frontend JS)."""
     web_file_service = current_app.config['WEB_FILE_SERVICE']
-    is_locked = not web_file_service.verify_password(stored_name, None)
-    return {'is_locked': is_locked}
+@web_bp.route('/admin', methods=['GET'])
+def admin_page():
+    """Renders the admin page."""
+    if not session.get('is_admin'):
+        return render_template('admin.html', logged_in=False)
+    
+    marquee_service = current_app.config['MARQUEE_SERVICE']
+    current_text = marquee_service.get_marquee()
+    return render_template('admin.html', logged_in=True, marquee_text=current_text)
+
+@web_bp.route('/admin/login', methods=['POST'])
+def admin_login():
+    """Handles admin login."""
+    password = request.form.get('password')
+    admin_password = os.environ.get('ADMIN_PASSWORD')
+    
+    if admin_password and password == admin_password:
+        session['is_admin'] = True
+        flash('登入成功', 'success')
+    else:
+        flash('密碼錯誤', 'danger')
+        
+    return redirect(url_for('web.admin_page'))
+
+@web_bp.route('/admin/logout')
+def admin_logout():
+    """Handles admin logout."""
+    session.pop('is_admin', None)
+    flash('已登出', 'success')
+    return redirect(url_for('web.admin_page'))
+
+@web_bp.route('/admin/update_marquee', methods=['POST'])
+def update_marquee():
+    """Updates the marquee text."""
+    if not session.get('is_admin'):
+        return redirect(url_for('web.admin_page'))
+        
+    text = request.form.get('marquee_text')
+    marquee_service = current_app.config['MARQUEE_SERVICE']
+    marquee_service.set_marquee(text)
+    
+    flash('跑馬燈訊息已更新', 'success')
+    return redirect(url_for('web.admin_page'))

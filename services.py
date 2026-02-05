@@ -198,3 +198,28 @@ class FileService:
         
         # Move the file
         shutil.move(file_info.path, destination_path)
+
+class MarqueeService:
+    """Handles marquee text persistence."""
+    
+    def __init__(self, upload_folder: str):
+        self.upload_folder = upload_folder
+        if not os.path.exists(self.upload_folder):
+            os.makedirs(self.upload_folder)
+        self._file_path = os.path.join(self.upload_folder, 'marquee.json')
+
+    def get_marquee(self) -> str:
+        """Retrieves the marquee text."""
+        if not os.path.exists(self._file_path):
+            return "歡迎使用區網檔案傳輸系統！本系統提供安全、快速的局域網檔案分享服務。"
+        try:
+            with open(self._file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get('text', "")
+        except (json.JSONDecodeError, FileNotFoundError):
+            return ""
+
+    def set_marquee(self, text: str):
+        """Saves the marquee text."""
+        with open(self._file_path, 'w', encoding='utf-8') as f:
+            json.dump({'text': text}, f, ensure_ascii=False, indent=4)

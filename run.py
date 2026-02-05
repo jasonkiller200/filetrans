@@ -1,5 +1,8 @@
 import socket
+from dotenv import load_dotenv
 from app import create_app
+
+load_dotenv()
 
 def get_local_ip():
     """Gets the local IP address of the machine."""

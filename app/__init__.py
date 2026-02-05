@@ -1,6 +1,6 @@
 import os
 from flask import Flask, Blueprint
-from services import FileService
+from services import FileService, MarqueeService
 
 def create_app():
     app = Flask(__name__)
@@ -24,10 +24,12 @@ def create_app():
     # A separate service instance for each folder ensures separation of concerns
     web_file_service = FileService(upload_folder=UPLOAD_FOLDER)
     sap_file_service = FileService(upload_folder=SAP_STAGING_FOLDER)
+    marquee_service = MarqueeService(upload_folder=UPLOAD_FOLDER)
 
     # Store services and API key in app.config for easy access by blueprints
     app.config['WEB_FILE_SERVICE'] = web_file_service
     app.config['SAP_FILE_SERVICE'] = sap_file_service
+    app.config['MARQUEE_SERVICE'] = marquee_service
     app.config['API_KEY_SECRET'] = API_KEY_SECRET
     app.config['MPS_DESTINATION_FOLDER'] = MPS_DESTINATION_FOLDER
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER # Make these accessible if needed in blueprints

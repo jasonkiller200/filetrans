@@ -66,3 +66,4 @@ app/uploads/
 *.swp
 *.swo
 *~
+.env

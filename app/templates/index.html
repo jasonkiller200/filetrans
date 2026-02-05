@@ -36,6 +36,14 @@
             <p class="text-muted">安全、快速的局域網檔案分享服務</p>
         </header>
 
+        {% if marquee_text %}
+        <div class="marquee-container mb-4">
+            <div class="marquee-content">
+                {{ marquee_text }}
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}

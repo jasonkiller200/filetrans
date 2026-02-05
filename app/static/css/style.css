@@ -431,3 +431,39 @@ footer {
     gap: 0.75rem;
     background: rgba(0, 0, 0, 0.1);
 }
+
+/* Marquee */
+.marquee-container {
+    width: 100%;
+    overflow: hidden;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 0;
+    position: relative;
+    white-space: nowrap;
+    backdrop-filter: blur(8px);
+}
+
+.marquee-content {
+    display: inline-block;
+    padding-left: 100%;
+    animation: marquee 20s linear infinite;
+    color: var(--primary);
+    font-weight: 500;
+}
+
+@keyframes marquee {
+    0% {
+        transform: translate(0, 0);
+    }
+
+    100% {
+        transform: translate(-100%, 0);
+    }
+}
+
+/* Pause animation on hover */
+.marquee-container:hover .marquee-content {
+    animation-play-state: paused;
+}

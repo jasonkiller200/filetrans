@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>管理後台 | FileHub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container" style="max-width: 600px; margin-top: 5vh;">
+        <header class="mb-4 text-center">
+            <h1>管理後台</h1>
+            <p class="text-muted">跑馬燈與系統設定</p>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">
+            <span>{{ message }}</span>
+            <button type="button" class="btn-close" onclick="this.parentElement.style.display='none'">×</button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% if not logged_in %}
+        <div class="card">
+            <div class="card-header">
+                管理員登入
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('web.admin_login') }}" method="post">
+                    <div class="form-group mb-4">
+                        <label for="password" style="display: block; margin-bottom: 0.5rem;">管理員密碼</label>
+                        <input type="password" name="password" id="password" class="form-control" required autofocus>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">登入</button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div class="card">
+            <div class="card-header">
+                設定跑馬燈
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('web.update_marquee') }}" method="post">
+                    <div class="form-group mb-4">
+                        <label for="marquee_text" style="display: block; margin-bottom: 0.5rem;">跑馬燈內容</label>
+                        <textarea name="marquee_text" id="marquee_text" class="form-control" rows="4"
+                            placeholder="輸入要顯示在首頁的公告訊息...">{{ marquee_text }}</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">更新設定</button>
+                    <a href="{{ url_for('web.index') }}" class="btn btn-secondary" style="margin-left: 0.5rem;">返回首頁</a>
+                </form>
+            </div>
+        </div>
+        <div class="text-center mt-4">
+            <a href="{{ url_for('web.admin_logout') }}" class="btn btn-danger btn-sm">登出管理後台</a>
+        </div>
+        {% endif %}
+    </div>
+</body>
+
+</html>
