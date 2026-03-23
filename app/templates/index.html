@@ -89,7 +89,7 @@
                 上傳檔案
             </div>
             <div class="card-body">
-                <form action="{{ url_for('web.upload_file_web') }}" method="post" enctype="multipart/form-data">
+                <form id="uploadForm" action="{{ url_for('web.upload_file_web') }}" method="post" enctype="multipart/form-data">
                     <div class="input-group">
                         <input type="file" class="form-control" name="files" id="fileInput" multiple required>
                         <button type="submit" class="btn btn-primary">
@@ -127,6 +127,18 @@
                         </div>
                     </div>
                 </form>
+
+                <!-- Upload Progress Bar -->
+                <div id="uploadProgress" style="display: none; margin-top: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                        <span id="progressLabel" style="font-size: 0.875rem; color: var(--text-muted);">上傳中...</span>
+                        <span id="progressPercent" style="font-size: 0.875rem; font-weight: 600; color: var(--primary);">0%</span>
+                    </div>
+                    <div style="background: var(--border-glass); border-radius: 9999px; height: 8px; overflow: hidden;">
+                        <div id="progressBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #3b82f6, #10b981); border-radius: 9999px; transition: width 0.25s ease;"></div>
+                    </div>
+                    <div id="progressSize" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; text-align: right;"></div>
+                </div>
             </div>
         </div>
 
@@ -355,6 +367,108 @@
     </div>
 
     <script>
+        // ── Upload progress ──────────────────────────────────────────────────
+        document.getElementById('uploadForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const form = this;
+            const formData = new FormData(form);
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const progressDiv = document.getElementById('uploadProgress');
+            const progressBar = document.getElementById('progressBar');
+            const progressPercent = document.getElementById('progressPercent');
+            const progressLabel = document.getElementById('progressLabel');
+            const progressSize = document.getElementById('progressSize');
+            const fileInput = document.getElementById('fileInput');
+            const fileCount = fileInput.files.length;
+
+            if (fileCount === 0) return;
+
+            // Reset & show progress bar
+            progressBar.style.background = 'linear-gradient(90deg, #3b82f6, #10b981)';
+            progressBar.style.width = '0%';
+            progressPercent.textContent = '0%';
+            progressLabel.textContent = `正在上傳 ${fileCount} 個檔案…`;
+            progressSize.textContent = '';
+            progressDiv.style.display = 'block';
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.65';
+
+            function formatBytes(bytes) {
+                if (bytes >= 1073741824) return (bytes / 1073741824).toFixed(1) + ' GB';
+                if (bytes >= 1048576)    return (bytes / 1048576).toFixed(1) + ' MB';
+                if (bytes >= 1024)       return (bytes / 1024).toFixed(1) + ' KB';
+                return bytes + ' B';
+            }
+
+            const xhr = new XMLHttpRequest();
+
+            xhr.upload.addEventListener('progress', function (e) {
+                if (e.lengthComputable) {
+                    const pct = Math.round((e.loaded / e.total) * 100);
+                    progressBar.style.width = pct + '%';
+                    progressPercent.textContent = pct + '%';
+                    progressSize.textContent = formatBytes(e.loaded) + ' / ' + formatBytes(e.total);
+                }
+            });
+
+            xhr.addEventListener('load', function () {
+                progressBar.style.width = '100%';
+                progressPercent.textContent = '100%';
+
+                let messages = [];
+                try {
+                    const data = JSON.parse(xhr.responseText);
+                    messages = data.messages || [];
+                } catch (_) {}
+
+                const hasError = messages.some(m => m.category === 'danger');
+                if (hasError) {
+                    progressBar.style.background = '#ef4444';
+                    progressLabel.textContent = '部分檔案上傳失敗';
+                } else {
+                    progressLabel.textContent = '上傳完成！';
+                }
+
+                // Inject flash-style messages into the page then reload file list
+                const container = document.querySelector('.container');
+                const uploadCard = document.querySelector('.card');
+                messages.forEach(function (m) {
+                    const alert = document.createElement('div');
+                    alert.className = 'alert alert-' + m.category;
+                    alert.innerHTML = `<div style="display:flex;align-items:center;gap:0.75rem;">
+                        <span>${m.text}</span></div>
+                        <button type="button" class="btn-close" onclick="this.parentElement.style.display='none'">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line></svg></button>`;
+                    container.insertBefore(alert, uploadCard);
+                });
+
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+                form.reset();
+                document.getElementById('passwordField').style.display = 'none';
+
+                // Reload page to refresh the file list
+                setTimeout(function () { window.location.reload(); }, 800);
+            });
+
+            xhr.addEventListener('error', function () {
+                progressBar.style.background = '#ef4444';
+                progressLabel.textContent = '上傳失敗，請重試。';
+                progressSize.textContent = '';
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+            });
+
+            xhr.open('POST', form.action);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhr.send(formData);
+        });
+
+        // ── Password modal ───────────────────────────────────────────────────
         let currentAction = null; // 'download' or 'delete'
         let currentStoredName = null;
         let currentOriginalName = null;

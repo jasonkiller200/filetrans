@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint, render_template, request, send_from_directory, redirect, url_for, flash, current_app, session
+from flask import Blueprint, render_template, request, send_from_directory, redirect, url_for, flash, current_app, session, jsonify
 
 web_bp = Blueprint('web', __name__)
 
@@ -53,7 +53,16 @@ def upload_file_web():
         flash(f"成功上傳 {successful_uploads} 個檔案。", 'success')
     if failed_uploads > 0:
         flash(f"有 {failed_uploads} 個檔案上傳失敗。", 'danger')
-    
+
+    # XHR requests: return JSON so the progress bar handler can show messages
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        messages = []
+        if successful_uploads > 0:
+            messages.append({'category': 'success', 'text': f'成功上傳 {successful_uploads} 個檔案。'})
+        if failed_uploads > 0:
+            messages.append({'category': 'danger', 'text': f'有 {failed_uploads} 個檔案上傳失敗。'})
+        return jsonify({'messages': messages})
+
     return redirect(url_for('web.index'))
 
 @web_bp.route('/download/<path:stored_name>', methods=['GET', 'POST'])
