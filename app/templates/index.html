@@ -12,6 +12,7 @@
 
     <!-- Custom CSS -->
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <link rel="icon" href="data:,">
 </head>
 
 <body>
@@ -294,7 +295,7 @@
                                             下載
                                         </a>
                                         <button class="btn btn-danger btn-sm"
-                                            onclick="initiateDelete('{{ file.stored_name }}', '{{ file.original_name }}', {{ 'true' if file.has_password else 'false' }});"
+                                            onclick='initiateDelete({{ file.stored_name | tojson }}, {{ file.original_name | tojson }}, {{ "true" if file.has_password else "false" }});'
                                             title="刪除">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
