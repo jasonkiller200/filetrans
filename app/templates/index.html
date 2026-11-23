@@ -294,6 +294,17 @@
                                             </svg>
                                             下載
                                         </a>
+                                        <button type="button" class="btn btn-secondary btn-sm"
+                                            onclick='copyDownloadLink(this, {{ url_for("web.download_file", stored_name=file.stored_name, _external=True) | tojson }});'
+                                            title="複製下載連結">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                                            </svg>
+                                            <span>複製連結</span>
+                                        </button>
                                         <button class="btn btn-danger btn-sm"
                                             onclick='initiateDelete({{ file.stored_name | tojson }}, {{ file.original_name | tojson }}, {{ "true" if file.has_password else "false" }});'
                                             title="刪除">
@@ -468,6 +479,56 @@
             xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
             xhr.send(formData);
         });
+
+        // ── Copy download link ───────────────────────────────────────────────
+        function copyDownloadLink(button, url) {
+            const label = button.querySelector('span');
+
+            function showCopiedFeedback() {
+                if (!label) return;
+                if (button._copyTimer) {
+                    clearTimeout(button._copyTimer);
+                }
+                label.textContent = '已複製';
+                button._copyTimer = setTimeout(function () {
+                    label.textContent = '複製連結';
+                    button._copyTimer = null;
+                }, 2000);
+            }
+
+            function fallbackCopy(text) {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.setAttribute('readonly', '');
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                textarea.setSelectionRange(0, text.length);
+
+                let copied = false;
+                try {
+                    copied = document.execCommand('copy');
+                } catch (_) {
+                    copied = false;
+                }
+                document.body.removeChild(textarea);
+
+                if (copied) {
+                    showCopiedFeedback();
+                } else {
+                    window.prompt('請手動複製下載連結：', text);
+                }
+            }
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(url).then(showCopiedFeedback).catch(function () {
+                    fallbackCopy(url);
+                });
+            } else {
+                fallbackCopy(url);
+            }
+        }
 
         // ── Password modal ───────────────────────────────────────────────────
         let currentAction = null; // 'download' or 'delete'

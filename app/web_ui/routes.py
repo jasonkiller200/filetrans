@@ -9,8 +9,8 @@ def index():
     web_file_service = current_app.config['WEB_FILE_SERVICE']
     marquee_service = current_app.config['MARQUEE_SERVICE']
     
-    sort_by = request.args.get('sort', 'name')
-    order = request.args.get('order', 'asc')
+    sort_by = request.args.get('sort', 'date')
+    order = request.args.get('order', 'desc')
     
     try:
         all_files = web_file_service.get_all_files(sort_by=sort_by, order=order)
